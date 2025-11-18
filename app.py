@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for
 import random, time
+from difflib import get_close_matches
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Menu dictionary (nested)
+# Menu dictionary
 menu = {
     "Starters": { 
         "Fries": 2.50, "Garlic Bread": 3.50, "Caesar Salad": 9.00, "Chicken Nuggets": 6.75,
@@ -29,7 +31,8 @@ menu = {
     },
     "Non-Alcoholic Drinks": { 
         "Drinks": 2.00, "Boba Tea": 5.00, "Juice": 3.00, "Coffee": 4.00,
-        "Tea": 2.50, "Water": 1.50,"Lemonade": 3.50,"Iced Tea": 3.75,"Smoothie - Mango": 5.50,"Smoothie - Strawberry": 5.50,"Hot Chocolate": 4.50
+        "Tea": 2.50, "Water": 1.50,"Lemonade": 3.50,"Iced Tea": 3.75,
+        "Smoothie - Mango": 5.50,"Smoothie - Strawberry": 5.50,"Hot Chocolate": 4.50
     },
     "Alcoholic Drinks": { 
         "Red Wine Glass": 8.50, "White Wine Glass": 8.50, "Beer (Pint)": 6.00,
@@ -39,29 +42,36 @@ menu = {
     }
 }
 
+# Flatten menu for lookup
+flat_menu = {item: price for category in menu.values() for item, price in category.items()}
 
 current_order = []
 
-# Flatten menu for easier lookup
-flat_menu = {item: price for category_items in menu.values() for item, price in category_items.items()}
+# AI-enhanced item matching
+def find_best_match(query):
+    query = query.strip().title()
+    if query in flat_menu:
+        return query
+    matches = get_close_matches(query, flat_menu.keys(), n=1, cutoff=0.5)
+    return matches[0] if matches else None
 
-# Add item to order
 def add_item_to_order(item_name, quantity):
-    if item_name in flat_menu:
-        try:
-            qty = int(quantity)
-            if qty > 0:
-                # Increment quantity if item already in order
-                for item in current_order:
-                    if item['item'] == item_name:
-                        item['quantity'] += qty
-                        break
-                else:
-                    current_order.append({"item": item_name, "quantity": qty, "price": flat_menu[item_name]})
-        except ValueError:
-            pass
+    item_name = find_best_match(item_name)
+    if not item_name:
+        return False  # AI did not find item
 
-# Calculate totals
+    try:
+        qty = int(quantity)
+        if qty > 0:
+            for item in current_order:
+                if item['item'] == item_name:
+                    item['quantity'] += qty
+                    return True
+            current_order.append({"item": item_name, "quantity": qty, "price": flat_menu[item_name]})
+            return True
+    except:
+        return False
+
 def calculate_total_cost():
     total_items = sum(item['quantity']*item['price'] for item in current_order)
     service = total_items * 0.10
@@ -70,45 +80,25 @@ def calculate_total_cost():
     total = subtotal + tax
     return {"items_cost": total_items, "service_charge": service, "subtotal": subtotal, "tax": tax, "total": total}
 
-# Generate receipt text
-def generate_receipt():
-    if not current_order:
-        return "No items ordered."
-    receipt = f"🧾 Receipt Ref: Bill{random.randint(1000,9999)}\nDate: {time.asctime()}\n\n"
-    for item in current_order:
-        receipt += f"{item['item']} x {item['quantity']} = £{item['quantity']*item['price']:.2f}\n"
-    costs = calculate_total_cost()
-    receipt += f"\nItems Cost: £{costs['items_cost']:.2f}\nService Charge: £{costs['service_charge']:.2f}\nTax: £{costs['tax']:.2f}\nTotal: £{costs['total']:.2f}\n\nThank you! Visit Again 😊"
-    return receipt
-
-# Reset order
 def reset_order():
     current_order.clear()
 
-# Routes
 @app.route('/')
 def index():
     return render_template('menu.html', menu=menu, current_order=current_order)
 
 @app.route('/add_item', methods=['POST'])
 def add_item():
-    item_name = request.form.get('item_name')
-    quantity = request.form.get('quantity')
-    add_item_to_order(item_name, quantity)
+    name = request.form.get('item_name')
+    qty = request.form.get('quantity')
+    add_item_to_order(name, qty)
     return redirect(url_for('index'))
-
-from datetime import datetime
 
 @app.route('/generate_receipt')
 def generate_receipt_route():
-    if not current_order:
-        costs = None
-    else:
-        costs = calculate_total_cost()
+    costs = calculate_total_cost() if current_order else None
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return render_template('receipt.html', current_order=current_order, costs=costs, datetime_now=now)
-
-
 
 @app.route('/reset_order')
 def reset_order_route():
@@ -117,6 +107,3 @@ def reset_order_route():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-# Flatten menu for easier lookup
-flat_menu = {item: info['price'] for category_items in menu.values() for item, info in category_items.items()}

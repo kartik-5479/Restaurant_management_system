@@ -5,38 +5,38 @@
     <title>Le Jardin Bleu - Receipt</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Parisienne&family=Roboto+Mono&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         body {
             background: linear-gradient(135deg, #1c1c1c, #2b2b2b, #3a3a3a);
             font-family: 'Roboto Mono', monospace;
             color: #e0e0e0;
             min-height: 100vh;
+            font-style: italic;
         }
 
-        /* 🌿 Glowing Restaurant Name */
+        /* ✅ Restaurant Name */
         h1.restaurant-name {
             text-align: center;
             font-family: 'Parisienne', cursive;
             font-size: 3rem;
             margin-top: 20px;
             letter-spacing: 2px;
-            background: linear-gradient(90deg, #ffcc00, #00bfff, #ffcc00);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientGlow 5s ease-in-out infinite;
-            text-shadow: 0 0 15px rgba(255, 204, 0, 0.6), 0 0 25px rgba(0, 191, 255, 0.6);
+            color: #ffcc00;
+            font-style: normal;
         }
 
-        @keyframes gradientGlow {
-            0%, 100% {
-                background-position: 0% 50%;
-                text-shadow: 0 0 15px #ffcc00, 0 0 30px #ffcc00;
-            }
-            50% {
-                background-position: 100% 50%;
-                text-shadow: 0 0 20px #00bfff, 0 0 40px #00bfff;
-            }
+        /* ✨ Glow effect only for text, not emojis */
+        .glow-text {
+            color: #ffcc00;
+            text-shadow: 0 0 6px #ffcc00, 0 0 12px #ffcc00, 0 0 18px #ffcc00;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
         }
 
         .receipt-card {
@@ -49,103 +49,52 @@
             box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
         }
 
-        h2 {
-            color: #ffcc00;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        /* Elegant date/time style */
         .datetime {
             text-align: center;
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
             font-size: 1rem;
-            color: #ccc;
-            letter-spacing: 1px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 10px; border: 1px solid #444; }
+        th { background: #333; color: #ffcc00; }
+        tr:nth-child(even) td { background: #252525; }
 
-        th, td {
-            padding: 10px;
-            border: 1px solid #444;
-            font-style: italic; /* Italic columns */
-        }
+        .item-column { width: 35%; }
+        .summary { text-align: right; margin-top: 10px; }
 
-        th {
-            background: #333;
-            color: #ffcc00;
-            text-align: left;
-        }
-
-        td {
-            background: #2d2d2d;
-        }
-
-        tr:nth-child(even) td {
-            background: #252525;
-        }
-
-        /* Smaller "Item" column */
-        th.item-column, td.item-column {
-            width: 35%;
-        }
-
-        .summary {
-            text-align: right;
-            margin-top: 10px;
-            font-size: 0.95rem;
-        }
-
-        /* Thank You glow style for text only */
-        .thankyou {
-            font-size: 1.3em;
-            font-weight: bold;
-            text-align: center;
-        }
         .thankyou-text {
             font-family: 'Parisienne', cursive;
-            letter-spacing: 1px;
-            background: linear-gradient(90deg, #ffcc00, #00bfff, #ffcc00);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientGlow 5s ease-in-out infinite;
-            text-shadow: 0 0 10px rgba(255, 204, 0, 0.6), 0 0 20px rgba(0, 191, 255, 0.6);
+            color: #ffcc00;
+            font-style: normal;
         }
 
-        .note {
-            font-size: 1em;
-            color: #ccc;
-            text-align: center;
-        }
-
-        .btn-back {
+        .btn-back, .btn-print, .btn-download {
             display: block;
-            margin: 20px auto 0 auto;
+            margin: 10px auto 0 auto;
             background-color: #ffcc00;
             border-color: #ffcc00;
             color: #1c1c1c;
             font-weight: bold;
+            width: 200px;
+            text-align: center;
+            font-style: normal;
         }
 
-        .btn-back:hover {
+        .btn-back:hover, .btn-print:hover, .btn-download:hover {
             background-color: #e6b800;
             border-color: #e6b800;
             color: #000;
         }
     </style>
 </head>
+
 <body class="p-4">
-    <div class="receipt-card">
-        <h1 class="restaurant-name">Le Jardin Bleu</h1>
+    <div class="receipt-card" id="receipt">
+
+        <!-- ✅ Only the text 'Le Jardin Bleu' glows -->
+        <h1 class="restaurant-name">🍃 <span class="glow-text">Le Jardin Bleu</span> 🍃</h1>
+
         <h2>🍽️ Your Receipt 🍽️</h2>
         <p class="datetime">🕒 {{ datetime_now }}</p>
 
@@ -181,10 +130,27 @@
         <p class="text-center">No items ordered yet.</p>
         {% endif %}
 
-        <p class="thankyou">🙏 <span class="thankyou-text">Thank You! Visit Again</span> ⚙️😊🍴</p>
-        <p class="note">💾 Please keep the receipt safe to receive your order.</p>
-        <a href="{{ url_for('index') }}" class="btn btn-back">Back to Menu</a>
+        <p class="text-center">🙏 <span class="thankyou-text">Thank You! Visit Again</span> 😊🍴</p>
+        <p class="text-center">💾 Please keep the receipt safe to receive your order.</p>
     </div>
+
+    <button class="btn btn-print" onclick="window.print()">🖨 Print Receipt</button>
+    <button class="btn btn-download" onclick="downloadPDF()">📄 Download PDF</button>
+    <a href="{{ url_for('index') }}" class="btn btn-back">⬅ Back to Menu</a>
+
+    <script>
+        function downloadPDF() {
+            const receipt = document.getElementById("receipt");
+            const options = {
+                margin: 5,
+                filename: "receipt.pdf",
+                image: { type: "jpeg", quality: 1 },
+                html2canvas: { scale: 3 },
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+            };
+            html2pdf().set(options).from(receipt).save();
+        }
+    </script>
+
 </body>
 </html>
-
